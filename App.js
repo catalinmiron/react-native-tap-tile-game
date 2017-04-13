@@ -15,6 +15,8 @@ import CountdownTimer from './Timer';
 import BTN_NORMAL from './assets/btn_normal.png';
 import BTN_SUCCESS from './assets/btn_success.png';
 import BTN_ERROR from './assets/btn_error.png';
+import MODAL_BG from './assets/level_cleared_bg.png';
+import RELOAD_BTN from './assets/reload_btn.png';
 import GAME_BG from './assets/game_bg.png';
 
 const { width, height } = Dimensions.get('window');
@@ -42,8 +44,10 @@ export default class TapTile extends Component {
       moveTo: 0,
       finished: false,
       position: new Animated.ValueXY(),
+      animateModal: new Animated.Value(0),
       gameStarted: false,
-      score: 0
+      score: 0,
+      stars: 3
     };
   }
 
@@ -57,13 +61,16 @@ export default class TapTile extends Component {
       require('./assets/btn_normal.png'),
       require('./assets/btn_error.png'),
       require('./assets/btn_success.png'),
-      require('./assets/game_bg.png')
+      require('./assets/game_bg.png'),
+      require('./assets/level_cleared_bg.png'),
+      require('./assets/reload_btn.png')
     ]);
 
     await Promise.all([...imageAssets]);
 
     this.setState({
-      appIsReady: true
+      appIsReady: true,
+      timeRemaining: null
     });
   }
 
@@ -96,12 +103,27 @@ export default class TapTile extends Component {
     ];
   }
 
+  animateModal() {
+    const { gameOver, finished } = this.state;
+
+    Animated.spring(this.state.animateModal, {
+      bounciness: 12,
+      speed: 3,
+      toValue: finished || gameOver ? 1 : 0,
+      useNativeDriver: true
+    }).start();
+  }
+
   animateGame(moveTo) {
+    const { gameOver, finished } = this.state;
+
     Animated.timing(this.state.position, {
       duration: 200,
       toValue: { x: 0, y: moveTo * CELL_HEIGHT },
       useNativeDriver: true
-    }).start();
+    }).start(() => {
+      this.animateModal();
+    });
   }
 
   shuffle(a) {
@@ -120,41 +142,166 @@ export default class TapTile extends Component {
 
   async restartGame() {
     this.state.position.setValue({ x: 0, y: 0 });
-    this.setState({
-      game: this.makeMatrix(),
-      moveTo: 0,
-      gameStarted: false,
-      finished: false,
-      gameOver: false,
-      level: 1,
-      score: 0
-    });
+    this.setState(
+      {
+        game: this.makeMatrix(),
+        moveTo: 0,
+        gameStarted: false,
+        finished: false,
+        gameOver: false,
+        level: 1,
+        score: 0
+      },
+      () => {
+        this.animateModal();
+      }
+    );
+  }
+
+  getStarsCount(time) {
+    if (time >= 1.1) {
+      return 3;
+    } else if (time <= 1.099999 && time >= 0.4) {
+      return 2;
+    } else {
+      return 1;
+    }
   }
 
   renderGameOver() {
+    const scaleModal = this.state.animateModal.interpolate({
+      inputRange: [-1, 0, 1],
+      outputRange: [0, 0, 1]
+    });
+
     return (
-      <View style={styles.topContent}>
-        <Text style={styles.shadowSmall}>Game over</Text>
-        <TouchableOpacity onPress={() => this.restartGame()}>
-          <Text style={[styles.shadowSmall, styles.small]}>RESTART</Text>
-        </TouchableOpacity>
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          height: height,
+          width: width,
+          paddingHorizontal: 20,
+          backgroundColor: 'rgba(0,0,0,0.2)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 0,
+            height: height,
+            width: width,
+            paddingHorizontal: 20,
+            backgroundColor: 'transparent',
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [
+              {
+                scale: scaleModal
+              }
+            ]
+          }}>
+          <Image
+            source={MODAL_BG}
+            style={{
+              width: width - 40,
+              height: width,
+              resizeMode: 'contain'
+            }}>
+            <View style={[styles.topContent]}>
+              <Text style={styles.shadowSmall}>Game over</Text>
+            </View>
+          </Image>
+          {this.renderReload()}
+        </Animated.View>
       </View>
     );
   }
 
   renderCongrats() {
+    const scaleModal = this.state.animateModal.interpolate({
+      inputRange: [-1, 0, 1],
+      outputRange: [0, 0, 1]
+    });
+
     return (
-      <View style={styles.topContent}>
-        <Text style={styles.shadowSmall}>CONGRATS!</Text>
-        <TouchableOpacity onPress={() => this.restartGame()}>
-          <Text style={[styles.shadowSmall, styles.small]}>RESTART</Text>
-        </TouchableOpacity>
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          height: height,
+          width: width,
+          paddingHorizontal: 20,
+          backgroundColor: 'rgba(0,0,0,0.2)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 0,
+            height: height,
+            width: width,
+            paddingHorizontal: 20,
+            backgroundColor: 'transparent',
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [
+              {
+                scale: scaleModal
+              }
+            ]
+          }}>
+          <Image
+            source={MODAL_BG}
+            style={{
+              width: width - 40,
+              height: width,
+              resizeMode: 'contain'
+            }}>
+            <View style={[styles.topContent]}>
+              <Text style={styles.shadowSmall}>{this.state.stars}</Text>
+              <Text style={[styles.shadowSmall, { fontSize: 22 }]}>
+                Score: {this.state.score}
+              </Text>
+            </View>
+          </Image>
+          {this.renderReload()}
+        </Animated.View>
       </View>
     );
   }
 
+  renderReload() {
+    const SIZE = width / 5;
+    return (
+      <TouchableOpacity onPress={() => this.restartGame()}>
+        <Image
+          source={RELOAD_BTN}
+          style={{
+            width: SIZE,
+            height: SIZE,
+            resizeMode: 'contain',
+            position: 'absolute',
+            top: -15 - SIZE / 2,
+            left: -SIZE / 2
+          }}
+        />
+      </TouchableOpacity>
+    );
+  }
+
   render() {
-    const { score, gameOver, finished, appIsReady, gameStarted } = this.state;
+    const {
+      timeRemaining,
+      score,
+      gameOver,
+      finished,
+      appIsReady,
+      gameStarted,
+      stars
+    } = this.state;
 
     if (!appIsReady) {
       return <Components.AppLoading />;
@@ -163,25 +310,22 @@ export default class TapTile extends Component {
     return (
       <Image style={styles.backgroundImage} source={GAME_BG}>
         <View style={styles.container}>
-          <Text
-            style={[
-              styles.shadowSmall,
-              { fontSize: 24, paddingTop: 12, paddingBottom: 12 }
-            ]}>
-            Score: {score}
-          </Text>
-          {gameOver
-            ? this.renderGameOver()
-            : finished ? this.renderCongrats() : null}
           {gameStarted && !gameOver
             ? <CountdownTimer
                 initialTimeRemaining={5000}
                 interval={60}
                 completeCallback={() => this.gameoverResetState()}
+                tickCallback={timeRemaining =>
+                  this.setState({
+                    timeRemaining: (timeRemaining / 1000).toFixed(1)
+                  })}
               />
             : null}
           {this.renderGame()}
         </View>
+        {gameOver
+          ? this.renderGameOver()
+          : finished ? this.renderCongrats() : null}
       </Image>
     );
   }
@@ -200,7 +344,7 @@ export default class TapTile extends Component {
   }
 
   renderGame() {
-    const { game, moveTo } = this.state;
+    const { game, moveTo, timeRemaining } = this.state;
 
     return (
       <View style={{ height: height * 3 / 4, overflow: 'hidden', width }}>
@@ -250,15 +394,18 @@ export default class TapTile extends Component {
 
                         if (moveTo === 8) {
                           this.setState({
+                            score: (moveTo + 1) * MULTIPLIER +
+                              timeRemaining * 100,
                             finished: true,
-                            gameStarted: false
+                            gameStarted: false,
+                            stars: this.getStarsCount(timeRemaining)
                           });
 
                           return;
                         }
                         this.setState({
                           moveTo: moveTo + 1,
-                          score: (this.state.moveTo + 1) * MULTIPLIER
+                          score: (moveTo + 1) * MULTIPLIER
                         });
                       }}>
                       <View
@@ -372,15 +519,15 @@ const styles = StyleSheet.create({
   },
 
   shadowSmall: {
-    fontSize: 42,
+    fontSize: 32,
     color: '#fff',
-    fontWeight: '700',
+    fontWeight: '900',
     shadowColor: '#000',
     shadowOffset: {
       width: 1,
-      height: 2
+      height: 2.5
     },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.5,
     shadowRadius: 0,
     backgroundColor: 'transparent'
   },
