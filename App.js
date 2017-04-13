@@ -153,21 +153,25 @@ export default class TapTile extends Component {
     return Object.keys(this.state.game).sort((a, b) => b - a);
   }
 
-  async restartGame() {
+  restartGame() {
     arr.map(item => this.animatedValue[item].setValue(0));
-    this.state.position.setValue({ x: 0, y: 0 });
     this.setState(
       {
-        game: this.makeMatrix(),
         moveTo: 0,
         gameStarted: false,
         finished: false,
         gameOver: false,
         level: 1,
-        score: 0
+        score: 0,
+        game: this.makeMatrix()
       },
       () => {
-        this.animateModal();
+        setTimeout(
+          () => {
+            this.state.position.setValue({ x: 0, y: 0 });
+          },
+          500
+        );
       }
     );
   }
