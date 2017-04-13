@@ -15,6 +15,8 @@ import CountdownTimer from './Timer';
 import BTN_NORMAL from './assets/btn_normal.png';
 import BTN_SUCCESS from './assets/btn_success.png';
 import BTN_ERROR from './assets/btn_error.png';
+import STAR_NORMAL from './assets/star_normal.png';
+import STAR_ACTIVE from './assets/star_active.png';
 import MODAL_BG from './assets/level_cleared_bg.png';
 import RELOAD_BTN from './assets/reload_btn.png';
 import GAME_BG from './assets/game_bg.png';
@@ -32,11 +34,20 @@ function cacheFonts(fonts) {
   return fonts.map(font => Font.loadAsync(font));
 }
 
+const arr = [];
+for (var i = 0; i < 3; i++) {
+  arr.push(i);
+}
+
 export default class TapTile extends Component {
   constructor(props) {
     super(props);
 
     this.timer = null;
+    this.animatedValue = [];
+    arr.forEach(value => {
+      this.animatedValue[value] = new Animated.Value(0);
+    });
 
     this.state = {
       level: 1,
@@ -47,7 +58,7 @@ export default class TapTile extends Component {
       animateModal: new Animated.Value(0),
       gameStarted: false,
       score: 0,
-      stars: 3
+      stars: 2
     };
   }
 
@@ -63,7 +74,9 @@ export default class TapTile extends Component {
       require('./assets/btn_success.png'),
       require('./assets/game_bg.png'),
       require('./assets/level_cleared_bg.png'),
-      require('./assets/reload_btn.png')
+      require('./assets/reload_btn.png'),
+      require('./assets/star_normal.png'),
+      require('./assets/star_active.png')
     ]);
 
     await Promise.all([...imageAssets]);
@@ -141,6 +154,7 @@ export default class TapTile extends Component {
   }
 
   async restartGame() {
+    arr.map(item => this.animatedValue[item].setValue(0));
     this.state.position.setValue({ x: 0, y: 0 });
     this.setState(
       {
@@ -260,8 +274,59 @@ export default class TapTile extends Component {
               height: width,
               resizeMode: 'contain'
             }}>
-            <View style={[styles.topContent]}>
-              <Text style={styles.shadowSmall}>{this.state.stars}</Text>
+            <View
+              style={[
+                styles.topContent,
+                { paddingTop: width / 4, justifyContent: 'flex-start' }
+              ]}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  marginBottom: 20
+                }}>
+                {[0, 1, 2].map(i => {
+                  const animations = arr.map(item => {
+                    return Animated.spring(this.animatedValue[item], {
+                      toValue: 1
+                    });
+                  });
+                  Animated.sequence([
+                    Animated.delay(400),
+                    Animated.stagger(200, animations)
+                  ]).start();
+
+                  return (
+                    <Animated.View
+                      key={i}
+                      style={{
+                        transform: [
+                          {
+                            scale: this.animatedValue[i]
+                          }
+                        ]
+                      }}>
+                      <Image
+                        source={STAR_NORMAL}
+                        style={{
+                          transform: [
+                            {
+                              scale: i === 1 ? 1 : 0.8
+                            },
+                            {
+                              rotate: i === 1
+                                ? '0deg'
+                                : i === 0 ? '-7deg' : '7deg'
+                            }
+                          ]
+                        }}>
+                        {this.state.stars >= i + 1
+                          ? <Image source={STAR_ACTIVE} />
+                          : null}
+                      </Image>
+                    </Animated.View>
+                  );
+                })}
+              </View>
               <Text style={[styles.shadowSmall, { fontSize: 22 }]}>
                 Score: {this.state.score}
               </Text>
