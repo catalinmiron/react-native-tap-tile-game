@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "react-native-tap-tile-game",
-    "description": "An awesome TapTile Game built usign create-react-native-app",
+    "description": "Learning by doing 6/∞. An awesome TapTile Game built usign create-react-native-app",
     "slug": "react-native-tap-tile-game",
     "privacy": "public",
     "sdkVersion": "14.0.0",
