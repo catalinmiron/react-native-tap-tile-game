@@ -166,12 +166,12 @@ export default class TapTile extends Component {
         game: this.makeMatrix()
       },
       () => {
-        setTimeout(
-          () => {
-            this.state.position.setValue({ x: 0, y: 0 });
-          },
-          500
-        );
+        const { gameOver, finished } = this.state;
+
+        Animated.spring(this.state.position, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: true
+        }).start();
       }
     );
   }
@@ -200,7 +200,7 @@ export default class TapTile extends Component {
           height: height,
           width: width,
           paddingHorizontal: 20,
-          backgroundColor: 'rgba(0,0,0,0.2)',
+          backgroundColor: 'rgba(0,0,0,0.7)',
           justifyContent: 'center',
           alignItems: 'center'
         }}>
@@ -251,7 +251,7 @@ export default class TapTile extends Component {
           height: height,
           width: width,
           paddingHorizontal: 20,
-          backgroundColor: 'rgba(0,0,0,0.2)',
+          backgroundColor: 'rgba(0,0,0,0.7)',
           justifyContent: 'center',
           alignItems: 'center'
         }}>
@@ -405,7 +405,9 @@ export default class TapTile extends Component {
                     backgroundColor: 'transparent'
                   }
                 ]}>
-                5.0
+                {this.state.finished || this.state.gameOver
+                  ? this.state.timeRemaining
+                  : '5.0'}
               </Text>}
           {this.renderGame()}
         </View>
@@ -482,6 +484,7 @@ export default class TapTile extends Component {
                           this.setState({
                             score: (moveTo + 1) * MULTIPLIER +
                               timeRemaining * 100,
+                            moveTo: moveTo + 1,
                             finished: true,
                             gameStarted: false,
                             stars: this.getStarsCount(timeRemaining)
