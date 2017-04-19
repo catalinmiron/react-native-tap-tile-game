@@ -2,7 +2,7 @@
 
 Exponent: https://exp.host/@catalinmiron/react-native-tap-tile-game
 
-![react-native-dating-app](https://cloud.githubusercontent.com/assets/2805320/24679653/81e88b3a-1996-11e7-9474-db82d5cb0e20.gif)
+![react-native-taptile-game](https://cloud.githubusercontent.com/assets/2805320/25184092/14308f06-2522-11e7-85d1-c5d96286faee.gif)
 
 
 ----
@@ -12,6 +12,10 @@ Stack:
 - [React native](https://facebook.github.io/react-native/)
 - [Expo](http://expo.io)
 - [Create React Native App](https://github.com/react-community/create-react-native-app)
+
+Design:
+
+[GraphicBurger](http://graphicburger.com/mobile-game-gui/)
 
 ----
 
