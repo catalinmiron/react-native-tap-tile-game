@@ -389,7 +389,24 @@ export default class TapTile extends Component {
                     timeRemaining: (timeRemaining / 1000).toFixed(1)
                   })}
               />
-            : null}
+            : <Text
+                style={[
+                  {
+                    fontSize: 42,
+                    color: '#fff',
+                    fontWeight: '700',
+                    shadowColor: '#000',
+                    shadowOffset: {
+                      width: 1,
+                      height: 2
+                    },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 0,
+                    backgroundColor: 'transparent'
+                  }
+                ]}>
+                5.0
+              </Text>}
           {this.renderGame()}
         </View>
         {gameOver
